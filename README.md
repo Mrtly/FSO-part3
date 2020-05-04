@@ -1,6 +1,6 @@
 ### part 3 of Full Stack Open
 
-main FSO repo [here]()
+main FSO repo [here](https://github.com/Mrtly/FSO)
 
 - [x] Node.js & Express
 - [x] Simple web server

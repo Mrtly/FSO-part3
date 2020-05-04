@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 const port = 3001;
-const persons = [
+let persons = [
   {
     name: "Arto Hellas",
     number: "040-123456",
@@ -31,15 +31,30 @@ app.get("/api/persons", (req, res) => {
 
 app.get("/api/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-
   const person = persons.filter(person => person.id === id);
   
   if (person.length < 1) {
-    res.status(404).end();
+    res.status(404).json({
+      error: `Person with the id ${id} doesn't exist in the database`
+    });
   } else {
     res.json(person[0]);
   }
 });
+
+app.delete("/api/persons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const person = persons.filter(person => person.id === id);
+  
+  if (person.length < 1) {
+    res.status(404).json({
+      error: `Person with the id ${id} doesn't exist in the database`
+    });
+  } else {
+    persons = persons.filter(person => person.id !== id);
+    res.json([person[0]]);
+  }
+})
 
 app.get("/info", (req, res) => {
   res.send(`

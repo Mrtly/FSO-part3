@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const bodyParser = require("body-parser");
 
 const port = 3001;
 let persons = [
@@ -25,6 +26,12 @@ let persons = [
   }
 ];
 
+const generateId = () => {
+  return Math.floor(Math.random() * 1000);
+};
+
+app.use(bodyParser.json());
+
 app.get("/api/persons", (req, res) => {
   res.json(persons);
 });
@@ -40,6 +47,38 @@ app.get("/api/persons/:id", (req, res) => {
   } else {
     res.json(person[0]);
   }
+});
+
+app.post("/api/persons", (req, res) => {
+  console.log(req.body);
+  if (!req.body.name) {
+    return res.status(400).json({
+      error: "missing name"
+    });
+  }
+  if (!req.body.number) {
+    return res.status(400).json({
+      error: "missing number"
+    });
+  }
+
+  const personExists = persons.filter(
+    person => person.name.toLocaleLowerCase() === req.body.name.toLocaleLowerCase()
+  );
+
+  if (personExists.length > 0) {
+    return res.status(400).json({
+      error: 'name already exists'
+    });
+  }
+
+  const person = {
+    name: req.body.name, 
+    number: req.body.number, 
+    id: generateId()
+  };
+  persons.push(person);
+  res.json(person);
 });
 
 app.delete("/api/persons/:id", (req, res) => {

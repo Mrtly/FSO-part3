@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const morgan = require("morgan");
 
 const port = 3001;
 let persons = [
@@ -30,7 +31,19 @@ const generateId = () => {
   return Math.floor(Math.random() * 1000);
 };
 
+morgan.token("content", req => {
+  console.log(req.body);
+  if (!req.body) return "";
+  return JSON.stringify(req.body);
+});
+
 app.use(bodyParser.json());
+
+app.use(
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms :content"
+  )
+);
 
 app.get("/api/persons", (req, res) => {
   res.json(persons);
@@ -50,7 +63,6 @@ app.get("/api/persons/:id", (req, res) => {
 });
 
 app.post("/api/persons", (req, res) => {
-  console.log(req.body);
   if (!req.body.name) {
     return res.status(400).json({
       error: "missing name"

@@ -23,6 +23,8 @@ main FSO repo [here](https://github.com/Mrtly/FSO)
 - [x] Saving data to MongoDB
 - [x] Validation & ESLint
 
+App deployed on [fso-test.herokuapp.com](https://fso-test.herokuapp.com/)
+API on [fso-test.herokuapp.com/api/persons](https://fso-test.herokuapp.com/api/persons)
 
 ###### _reminder_
 to run with nodemon

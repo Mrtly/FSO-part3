@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
+const cors = require('cors')
 
 const PORT = process.env.PORT || 3001;
 let persons = [
@@ -43,6 +44,8 @@ app.use(
     ":method :url :status :res[content-length] - :response-time ms :content"
   )
 );
+app.use(cors());
+app.use(express.static('build'));
 
 app.get("/api/persons", (req, res) => {
   res.json(persons);

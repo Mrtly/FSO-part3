@@ -37,6 +37,20 @@ const generateId = () => {
   return Math.floor(Math.random() * 1000);
 };
 
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError" && error.kind === "ObjectJd") {
+    return res.status(400).send({ error: "Malformatted id" });
+  }
+
+  next(error);
+};
+
+const unknownEndpoint = (req, res, next) => {
+  res.status(404).send({ error: "unknown endpoint" });
+};
+
 morgan.token("content", req => {
   console.log(req.body);
   if (!req.body) return "";
@@ -72,6 +86,38 @@ app.get("/api/persons/:id", (req, res) => {
   }
 });
 
+app.put("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+
+  const person = {
+    name: req.body.name,
+    number: req.body.number
+  };
+
+  Person.findByIdAndUpdate(id, person, { new: true })
+    .then(doc => {
+      if (doc) {
+        res.json(doc.toJSON());
+      } else {
+        res.status(204).end();
+      }
+    })
+    .catch(err => next(err));
+});
+
+app.delete("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Person.findByIdAndRemove(id)
+    .then(personDoc => {
+      if (personDoc) {
+        res.json(personDoc.toJSON());
+      } else {
+        res.status(204).end();
+      }
+    })
+    .catch(err => next(err));
+});
+
 app.post("/api/persons", (req, res) => {
   if (!req.body.name) {
     return res.status(400).json({
@@ -89,26 +135,13 @@ app.post("/api/persons", (req, res) => {
     number: req.body.number, 
   });
 
-  person.save().then(personDoc => {
+  person
+  .save()
+  .then(personDoc => {
     res.json(personDoc.toJSON());
-  });
+  })
+  .catch(err => next(err));
 });
-
-app.delete("/api/persons/:id", (req, res) => {
-  const id = req.params.id;
-  Person.findByIdAndRemove(id)
-    .then(personDoc => {
-      if (personDoc) {
-        res.json(personDoc.toJSON());
-      } else {
-        res.status(204).end();
-      }
-    })
-    .catch(err => {
-      console.log('error while deleting person', err);
-      res.json({ error: "an error occured" });
-    });
-  });
 
 app.get("/info", (req, res) => {
   res.send(`
@@ -116,6 +149,10 @@ app.get("/info", (req, res) => {
         <p>${new Date()}</p>
     `);
 });
+
+app.use(unknownEndpoint);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App runing on port ${PORT}`);

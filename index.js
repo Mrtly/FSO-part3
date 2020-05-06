@@ -1,8 +1,13 @@
+require("dotenv").config({ path: __dirname + "/.env" });
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
-const cors = require('cors')
+const cors = require('cors');
+const db = require("./mongo");
+db.connect();
+
+const Person = require("./models/person");
 
 const PORT = process.env.PORT || 3001;
 let persons = [
@@ -48,7 +53,10 @@ app.use(cors());
 app.use(express.static('build'));
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  // res.json(persons);
+  Person.find({}).then(docs => {
+    res.json(docs);
+  });
 });
 
 app.get("/api/persons/:id", (req, res) => {
@@ -76,38 +84,31 @@ app.post("/api/persons", (req, res) => {
     });
   }
 
-  const personExists = persons.filter(
-    person => person.name.toLocaleLowerCase() === req.body.name.toLocaleLowerCase()
-  );
-
-  if (personExists.length > 0) {
-    return res.status(400).json({
-      error: 'name already exists'
-    });
-  }
-
-  const person = {
+  const person = new Person({
     name: req.body.name, 
     number: req.body.number, 
-    id: generateId()
-  };
-  persons.push(person);
-  res.json(person);
+  });
+
+  person.save().then(personDoc => {
+    res.json(personDoc.toJSON());
+  });
 });
 
 app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.filter(person => person.id === id);
-  
-  if (person.length < 1) {
-    res.status(404).json({
-      error: `Person with the id ${id} doesn't exist in the database`
+  const id = req.params.id;
+  Person.findByIdAndRemove(id)
+    .then(personDoc => {
+      if (personDoc) {
+        res.json(personDoc.toJSON());
+      } else {
+        res.status(204).end();
+      }
+    })
+    .catch(err => {
+      console.log('error while deleting person', err);
+      res.json({ error: "an error occured" });
     });
-  } else {
-    persons = persons.filter(person => person.id !== id);
-    res.json([person[0]]);
-  }
-})
+  });
 
 app.get("/info", (req, res) => {
   res.send(`

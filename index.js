@@ -10,32 +10,7 @@ db.connect();
 const Person = require("./models/person");
 
 const PORT = process.env.PORT || 3001;
-let persons = [
-  {
-    name: "Arto Hellas",
-    number: "040-123456",
-    id: 1
-  },
-  {
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-    id: 2
-  },
-  {
-    name: "Dan Abramov",
-    number: "12-43-234345",
-    id: 3
-  },
-  {
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-    id: 4
-  }
-];
 
-const generateId = () => {
-  return Math.floor(Math.random() * 1000);
-};
 
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
@@ -67,23 +42,23 @@ app.use(cors());
 app.use(express.static('build'));
 
 app.get("/api/persons", (req, res) => {
-  // res.json(persons);
   Person.find({}).then(docs => {
     res.json(docs);
   });
 });
 
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.filter(person => person.id === id);
+  const id = req.params.id;
   
-  if (person.length < 1) {
-    res.status(404).json({
-      error: `Person with the id ${id} doesn't exist in the database`
-    });
-  } else {
-    res.json(person[0]);
-  }
+  Person.findById(id)
+    .then(personDoc => {
+      if (personDoc) {
+        res.json(personDoc.toJSON());
+      } else {
+        res.status(204).end();
+      }
+    })
+    .catch(err => next(err));
 });
 
 app.put("/api/persons/:id", (req, res, next) => {
@@ -144,10 +119,12 @@ app.post("/api/persons", (req, res) => {
 });
 
 app.get("/info", (req, res) => {
-  res.send(`
-        <p>Phonebook has info for ${persons.length} people</p>
-        <p>${new Date()}</p>
-    `);
+ Person.count({}).then(personsLength => {
+   res.send(`
+   <p>phonebook has info for ${personsLength} people</p>
+   <p>${new Date()}</p>
+   `);
+ });
 });
 
 app.use(unknownEndpoint);
